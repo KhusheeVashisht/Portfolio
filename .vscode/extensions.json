@@ -1,0 +1,20 @@
+{
+  "recommendations": [
+    "ES7+React/Redux/React-Native snippets",
+    "Tailwind CSS IntelliSense",
+    "Prettier - Code formatter",
+    "ESLint",
+    "Thunder Client",
+    "GitLens"
+  ],
+  "settings": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/dist": true
+    }
+  }
+}
