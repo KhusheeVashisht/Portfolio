@@ -1,33 +1,55 @@
-export const GITHUB_USERNAME = 'KhusheeVashisht';
+import {
+  EXCLUDED_REPOSITORIES,
+  FEATURED_PROJECT_METADATA,
+  FEATURED_PROJECTS,
+  GITHUB_USERNAME,
+  LIVE_DEMO_REPOS,
+} from '../config/featuredProjects';
 
-export const FEATURED_REPO_ORDER = ['MindPulse', 'Quetie_MBG', 'Translator_Bot'];
-
-/** Only MindPulse may show a public Live Demo button. */
-export const LIVE_DEMO_REPOS = ['MindPulse'];
-
-export const FEATURED_REPO_METADATA = {
-  MindPulse: {
-    liveUrl: 'https://mindpulse-1-532q.onrender.com',
-    backendUrl: 'https://mindpulse-980f.onrender.com/',
-    badge: 'Flagship',
-    status: 'Active Development',
-  },
-  Quetie_MBG: {
-    badge: 'Production',
-    status: 'Production Use',
-  },
-  Translator_Bot: {
-    badge: 'Production',
-    status: 'Production Use',
-  },
+export {
+  EXCLUDED_REPOSITORIES,
+  FEATURED_PROJECT_METADATA,
+  FEATURED_PROJECTS,
+  GITHUB_USERNAME,
+  LIVE_DEMO_REPOS,
 };
+
+/** @deprecated Use FEATURED_PROJECTS from src/config/featuredProjects.js */
+export const FEATURED_REPO_ORDER = FEATURED_PROJECTS;
+
+/** @deprecated Use FEATURED_PROJECT_METADATA from src/config/featuredProjects.js */
+export const FEATURED_REPO_METADATA = FEATURED_PROJECT_METADATA;
 
 export const STATUS_BADGES = {
   'Active Development': { emoji: '🟢', label: 'Active Development', className: 'border-green-400/30 bg-green-400/10 text-green-300' },
   'Production Use': { emoji: '🟢', label: 'Production Use', className: 'border-green-400/30 bg-green-400/10 text-green-300' },
   'Academic Project': { emoji: '🔵', label: 'Academic Project', className: 'border-blue-400/30 bg-blue-400/10 text-blue-300' },
   'Experimental Project': { emoji: '🟡', label: 'Experimental Project', className: 'border-yellow-400/30 bg-yellow-400/10 text-yellow-300' },
+  Archived: { emoji: '📦', label: 'Archived', className: 'border-gray-400/30 bg-gray-400/10 text-gray-300' },
 };
+
+/**
+ * Authoritative public repository count from GitHub profile metadata.
+ * Does not subtract excluded, archived, or featured-only subsets.
+ */
+export function getPublicRepositoryCount(profile = {}, rawRepositories = []) {
+  if (typeof profile.public_repos === 'number' && profile.public_repos >= 0) {
+    return profile.public_repos;
+  }
+
+  return Array.isArray(rawRepositories) ? rawRepositories.length : 0;
+}
+
+/** Formatted label for public repository totals shown in UI copy. */
+export function formatPublicRepositoryLabel(count) {
+  const total = Number(count) || 0;
+
+  if (total >= 16) {
+    return `${total}+ Public Repositories`;
+  }
+
+  return `${total} Public Repositor${total === 1 ? 'y' : 'ies'}`;
+}
 
 export const CATEGORY_ORDER = [
   'All Projects',
@@ -208,9 +230,6 @@ const SKILL_GROUP_ORDER = [
   'Software Engineering Concepts',
 ];
 
-const PORTFOLIO_CACHE_KEY = 'portfolio_github_cache_v2';
-const PORTFOLIO_CACHE_TTL_MS = 1000 * 60 * 30;
-
 function normalizeText(value) {
   return String(value || '').toLowerCase();
 }
@@ -251,61 +270,20 @@ export function isValidHttpUrl(value) {
   }
 }
 
-export function isFeaturedRepo(name) {
-  return FEATURED_REPO_ORDER.includes(name);
+export function isFeaturedRepo(name, { archived = false } = {}) {
+  return FEATURED_PROJECTS.includes(name) && !archived;
 }
 
 export function getFeaturedMeta(name) {
-  return FEATURED_REPO_METADATA[name] || null;
+  return FEATURED_PROJECT_METADATA[name] || null;
+}
+
+export function isExcludedRepository(name) {
+  return EXCLUDED_REPOSITORIES.includes(name);
 }
 
 export function shouldShowLiveDemo(name) {
   return LIVE_DEMO_REPOS.includes(name);
-}
-
-export function getGitHubHeaders() {
-  const headers = {
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-
-  const token = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_GITHUB_TOKEN : null;
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
-}
-
-export async function fetchJson(url) {
-  const response = await fetch(url, { headers: getGitHubHeaders() });
-
-  if (response.status === 403) {
-    const error = new Error('GitHub API rate limit reached');
-    error.code = 'RATE_LIMIT';
-    throw error;
-  }
-
-  if (!response.ok) {
-    throw new Error(`GitHub request failed: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-export async function fetchText(url) {
-  const response = await fetch(url, {
-    headers: {
-      ...getGitHubHeaders(),
-      Accept: 'application/vnd.github.raw',
-    },
-  });
-
-  if (!response.ok) {
-    return '';
-  }
-
-  return response.text();
 }
 
 export function extractReadmeSummary(readmeText) {
@@ -362,6 +340,10 @@ export function inferCategory(repo, readmeText = '') {
 }
 
 export function inferStatus(repo, readmeText = '', categoryInfo = {}) {
+  if (repo.archived) {
+    return 'Archived';
+  }
+
   const featuredMeta = getFeaturedMeta(repo.name);
   if (featuredMeta?.status) {
     return featuredMeta.status;
@@ -488,6 +470,7 @@ export function normalizeRepository(repo, readmeText = '', languages = {}) {
   const categoryInfo = inferCategory(repo, readmeText);
   const technologies = inferTechnologies(repo, readmeText, languages);
   const languageStats = buildLanguageStats(languages);
+  const archived = Boolean(repo.archived);
   const featuredMeta = getFeaturedMeta(repo.name);
   const description = generateDescription(repo, readmeText);
   const story = generateRepositoryStory(repo, readmeText);
@@ -495,11 +478,13 @@ export function normalizeRepository(repo, readmeText = '', languages = {}) {
   const githubUrl = isValidHttpUrl(repo.html_url) ? repo.html_url : `https://github.com/${GITHUB_USERNAME}/${repo.name}`;
   const liveUrl = featuredMeta?.liveUrl && isValidHttpUrl(featuredMeta.liveUrl) ? featuredMeta.liveUrl : null;
   const backendUrl = featuredMeta?.backendUrl && isValidHttpUrl(featuredMeta.backendUrl) ? featuredMeta.backendUrl : null;
-  const showLiveDemo = shouldShowLiveDemo(repo.name) && Boolean(liveUrl);
+  const showLiveDemo = shouldShowLiveDemo(repo.name) && Boolean(liveUrl) && !archived;
+  const featured = isFeaturedRepo(repo.name, { archived });
 
   return {
     id: repo.id,
     name: repo.name,
+    archived,
     description,
     shortDescription: description.length > 160 ? `${description.slice(0, 157)}...` : description,
     story,
@@ -514,12 +499,12 @@ export function normalizeRepository(repo, readmeText = '', languages = {}) {
     languageStats,
     category: categoryInfo.primary,
     categories: categoryInfo.categories,
-    displayCategories: getDisplayCategories({ categories: categoryInfo.categories, category: categoryInfo.primary, featured: isFeaturedRepo(repo.name) }),
+    displayCategories: getDisplayCategories({ categories: categoryInfo.categories, category: categoryInfo.primary, featured }),
     technologies,
     status,
     statusBadge: STATUS_BADGES[status] || STATUS_BADGES['Academic Project'],
     topics: dedupe([...(repo.topics || []), ...technologies].map((item) => String(item).trim())),
-    featured: isFeaturedRepo(repo.name),
+    featured,
     featuredBadge: featuredMeta?.badge || null,
     isFork: Boolean(repo.fork),
     openIssues: repo.open_issues_count || 0,
@@ -601,8 +586,12 @@ export function buildPortfolioStats(profile = {}, repositories = []) {
     });
   });
 
+  const publicRepositoryCount = getPublicRepositoryCount(profile);
+
   return {
-    totalRepositories: repositories.length || profile.public_repos || 0,
+    totalRepositories: publicRepositoryCount,
+    publicRepositoryCount,
+    publicRepositoryLabel: formatPublicRepositoryLabel(publicRepositoryCount),
     languagesUsed: languages.length,
     topLanguages,
     activeRepositories: activeRepos.length,
@@ -780,16 +769,19 @@ function scoreRepositoryRelevance(repository, query) {
 }
 
 export function buildPortfolioModel(profile, rawRepositories = []) {
-  const repositories = sortRepositories(rawRepositories, { sortBy: 'newest' });
+  const publicRepositoryCount = getPublicRepositoryCount(profile, rawRepositories);
+  const visibleRepositories = rawRepositories.filter((repository) => !isExcludedRepository(repository.name));
+  const repositories = sortRepositories(visibleRepositories, { sortBy: 'newest' });
 
-  const featuredRepositories = FEATURED_REPO_ORDER
+  const featuredRepositories = FEATURED_PROJECTS
     .map((name) => repositories.find((repository) => repository.name === name))
-    .filter(Boolean)
+    .filter((repository) => repository && !repository.archived)
     .map((repository) => ({
       ...repository,
-      featuredBadge: FEATURED_REPO_METADATA[repository.name]?.badge || 'Featured',
-      status: FEATURED_REPO_METADATA[repository.name]?.status || repository.status,
-      statusBadge: STATUS_BADGES[FEATURED_REPO_METADATA[repository.name]?.status || repository.status] || repository.statusBadge,
+      featured: true,
+      featuredBadge: FEATURED_PROJECT_METADATA[repository.name]?.badge || 'Featured',
+      status: FEATURED_PROJECT_METADATA[repository.name]?.status || repository.status,
+      statusBadge: STATUS_BADGES[FEATURED_PROJECT_METADATA[repository.name]?.status || repository.status] || repository.statusBadge,
     }));
 
   const categoryCounts = CATEGORY_ORDER.reduce((accumulator, category) => {
@@ -815,6 +807,9 @@ export function buildPortfolioModel(profile, rawRepositories = []) {
       }
     }
   }
+
+  displayCategoryCounts['All Projects'] = publicRepositoryCount;
+  categoryCounts['All Projects'] = publicRepositoryCount;
 
   const stats = buildPortfolioStats(profile, repositories);
   const skills = buildSkillsFromRepositories(repositories);
@@ -845,63 +840,8 @@ export function buildEmptyPortfolioModel() {
   );
 }
 
-export function loadCachedPortfolio() {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed?.data || !parsed?.timestamp) return null;
-
-    const isFresh = Date.now() - parsed.timestamp < PORTFOLIO_CACHE_TTL_MS;
-    return { data: parsed.data, isFresh };
-  } catch {
-    return null;
-  }
-}
-
-export function saveCachedPortfolio(portfolio) {
-  if (typeof window === 'undefined' || !portfolio) return;
-
-  try {
-    localStorage.setItem(
-      PORTFOLIO_CACHE_KEY,
-      JSON.stringify({ data: portfolio, timestamp: Date.now() })
-    );
-  } catch {
-    // Ignore storage quota or privacy mode errors.
-  }
-}
-
-export async function enrichRepositorySafely(username, repo) {
-  try {
-    const [languages, readmeText] = await Promise.all([
-      fetchJson(repo.languages_url).catch(() => ({})),
-      fetchText(`https://api.github.com/repos/${username}/${repo.name}/readme`).catch(() => ''),
-    ]);
-
-    return normalizeRepository(repo, readmeText, languages);
-  } catch {
-    return normalizeRepository(repo, '', {});
-  }
-}
-
-export async function fetchPortfolioData(username) {
-  const [profileData, repositoriesData] = await Promise.all([
-    fetchJson(`https://api.github.com/users/${username}`),
-    fetchJson(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`),
-  ]);
-
-  const batchSize = 5;
-  const enrichedRepositories = [];
-
-  for (let index = 0; index < repositoriesData.length; index += batchSize) {
-    const batch = repositoriesData.slice(index, index + batchSize);
-    const results = await Promise.all(batch.map((repo) => enrichRepositorySafely(username, repo)));
-    enrichedRepositories.push(...results);
-  }
-
-  return buildPortfolioModel(profileData, enrichedRepositories);
-}
+export {
+  fetchPortfolioData,
+  loadCachedPortfolio,
+  saveCachedPortfolio,
+} from '../services/githubService';

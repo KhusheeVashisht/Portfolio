@@ -5,7 +5,7 @@ import {
   fetchPortfolioData,
   loadCachedPortfolio,
   saveCachedPortfolio,
-} from '../utils/githubPortfolio';
+} from '../services/githubService';
 
 export const useScrollAnimation = (elementRef, options = {}) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,8 +43,7 @@ export const useScrollAnimation = (elementRef, options = {}) => {
 export const useDarkMode = () => {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark')
-        || localStorage.getItem('darkMode') === 'true';
+      return document.documentElement.classList.contains('dark');
     }
     return true;
   });
@@ -58,9 +57,27 @@ export const useDarkMode = () => {
       html.classList.remove('dark');
       localStorage.setItem('darkMode', 'false');
     }
+
+    const themeColorMeta = document.getElementById('theme-color-meta');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', isDark ? '#0f172a' : '#f8fafc');
+    }
   }, [isDark]);
 
-  const toggle = () => setIsDark(!isDark);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const handleSystemThemeChange = (event) => {
+      if (localStorage.getItem('darkMode') === null) {
+        setIsDark(event.matches);
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+  }, []);
+
+  const toggle = () => setIsDark((current) => !current);
   return { isDark, toggle };
 };
 

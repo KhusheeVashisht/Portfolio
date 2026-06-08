@@ -107,7 +107,7 @@ const About = ({ portfolio }) => {
             >
               {[
                 { label: 'GitHub handle', value: profile.login || 'KhusheeVashisht' },
-                { label: 'Public repositories', value: String(profile.public_repos || portfolio?.stats?.totalRepositories || 0) },
+                { label: 'Public repositories', value: portfolio?.stats?.publicRepositoryLabel || String(portfolio?.stats?.publicRepositoryCount || 0) },
                 { label: 'Primary focus', value: 'AI, backend, full stack' },
                 { label: 'Portfolio mode', value: 'Live and self-updating' },
               ].map((item, i) => (

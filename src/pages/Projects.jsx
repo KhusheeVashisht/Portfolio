@@ -1,23 +1,15 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import ProjectCard from '../components/ProjectCard';
 import Modal from '../components/Modal';
 import { useScrollAnimation } from '../hooks/useCustom';
-import { FEATURED_REPO_ORDER } from '../utils/githubPortfolio';
 
 const Projects = ({ portfolio }) => {
   const sectionRef = useRef(null);
   useScrollAnimation(sectionRef);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  const featuredRepos = useMemo(() => {
-    const repositories = portfolio?.featuredRepositories || [];
-    const ordered = FEATURED_REPO_ORDER
-      .map((name) => repositories.find((repository) => repository.name === name))
-      .filter(Boolean);
-
-    return ordered.length > 0 ? ordered : repositories.slice(0, 3);
-  }, [portfolio]);
+  const featuredRepos = portfolio?.featuredRepositories || [];
 
   const liveDemoCount = featuredRepos.filter((repo) => repo.showLiveDemo).length;
 
@@ -33,12 +25,12 @@ const Projects = ({ portfolio }) => {
           </h2>
           <div className="w-20 h-1 bg-gradient-to-r from-neon-cyan to-neon-blue rounded-full"></div>
           <p className="mt-4 max-w-3xl text-gray-400">
-            These three projects are pinned in a fixed order so recruiters immediately see the strongest product work — sourced directly from GitHub with verified repository links.
+            These projects are pinned in a fixed order so recruiters immediately see the strongest product work — sourced directly from GitHub with verified repository links.
           </p>
         </motion.div>
 
         {featuredRepos.length > 0 ? (
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
             {featuredRepos.map((project, index) => (
               <ProjectCard
                 key={project.name}
@@ -62,7 +54,7 @@ const Projects = ({ portfolio }) => {
             className="mt-12 grid gap-4 md:grid-cols-3"
           >
             {[
-              { label: 'Repositories showcased', value: String(portfolio.stats.totalRepositories || 0) },
+              { label: 'Public repositories', value: String(portfolio.stats.publicRepositoryCount ?? portfolio.stats.totalRepositories ?? 0) },
               { label: 'Public live demos', value: String(liveDemoCount) },
               { label: 'Core stacks represented', value: String(portfolio.stats.featuredTechnologies?.length || 0) },
             ].map((item) => (

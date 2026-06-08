@@ -132,10 +132,10 @@ const Hero = ({ portfolio }) => {
             {summary}
           </motion.p>
 
-          {stats.totalRepositories > 0 && (
+          {(stats.publicRepositoryCount ?? stats.totalRepositories) > 0 && (
             <motion.div variants={itemVariants} className="mb-12 grid gap-4 sm:grid-cols-3 max-w-4xl mx-auto">
               {[
-                { label: 'Public repos', value: stats.totalRepositories },
+                { label: 'Public repos', value: stats.publicRepositoryCount ?? stats.totalRepositories },
                 { label: 'Languages', value: stats.languagesUsed },
                 { label: 'Active projects', value: stats.activeRepositories },
               ].map((item) => (

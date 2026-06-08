@@ -23,9 +23,9 @@ export default {
           pink: '#ec4899',
         },
         dark: {
-          bg: '#0f172a',
-          card: '#1e293b',
-          border: '#334155',
+          bg: 'rgb(var(--color-bg-rgb) / <alpha-value>)',
+          card: 'rgb(var(--color-card-rgb) / <alpha-value>)',
+          border: 'rgb(var(--color-border-rgb) / <alpha-value>)',
         }
       },
       animation: {

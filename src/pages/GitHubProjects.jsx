@@ -43,7 +43,7 @@ const GitHubProjects = ({ portfolio, portfolioError, usingCache }) => {
         {portfolio?.stats && (
           <div className="mb-10 grid gap-4 md:grid-cols-4">
             {[
-              { label: 'Repositories', value: explorerStats.totalRepositories || 0 },
+              { label: 'Repositories', value: explorerStats.publicRepositoryCount ?? explorerStats.totalRepositories ?? 0 },
               { label: 'Languages', value: explorerStats.languagesUsed || 0 },
               { label: 'Active in 90 days', value: explorerStats.activeRepositories || 0 },
               { label: 'Technologies detected', value: explorerStats.featuredTechnologies?.length || 0 },
@@ -74,7 +74,7 @@ const GitHubProjects = ({ portfolio, portfolioError, usingCache }) => {
         <div className="flex flex-wrap gap-3 mb-10">
           {DISPLAY_CATEGORY_ORDER.map((category) => {
             const count = category === 'All Projects'
-              ? repositories.length
+              ? explorerStats.publicRepositoryCount ?? explorerStats.totalRepositories ?? 0
               : categoryCounts[category] || 0;
 
             if (category !== 'All Projects' && count === 0) {

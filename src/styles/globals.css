@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg-rgb: 248 250 252;
+  --color-card-rgb: 255 255 255;
+  --color-border-rgb: 203 213 225;
+  color-scheme: light;
+}
+
+.dark {
+  --color-bg-rgb: 15 23 42;
+  --color-card-rgb: 30 41 59;
+  --color-border-rgb: 51 65 85;
+  color-scheme: dark;
+}
+
 /* Global custom styles */
 * {
   @apply transition-colors duration-300;
@@ -11,6 +25,22 @@
 
 body {
   @apply bg-dark-bg text-white font-['Inter'];
+}
+
+html:not(.dark) .text-white {
+  @apply text-slate-900;
+}
+
+html:not(.dark) .text-gray-300 {
+  @apply text-slate-600;
+}
+
+html:not(.dark) .text-gray-400 {
+  @apply text-slate-500;
+}
+
+html:not(.dark) ::selection {
+  @apply bg-neon-cyan/30 text-slate-900;
 }
 
 html {
@@ -23,6 +53,10 @@ html {
 }
 
 .bg-gradient-dark {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+}
+
+.dark .bg-gradient-dark {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
 }
 

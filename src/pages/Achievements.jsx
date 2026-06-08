@@ -27,7 +27,7 @@ const Achievements = ({ portfolio }) => {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: 'Public repos', value: stats.totalRepositories || 0 },
+            { label: 'Public repos', value: stats.publicRepositoryCount ?? stats.totalRepositories ?? 0 },
             { label: 'Languages used', value: stats.languagesUsed || 0 },
             { label: 'Active repos', value: stats.activeRepositories || 0 },
             { label: 'Featured technologies', value: stats.featuredTechnologies?.length || 0 },

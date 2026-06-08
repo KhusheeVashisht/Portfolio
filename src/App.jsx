@@ -17,7 +17,7 @@ import Contact from './pages/Contact';
 import LegalSections from './pages/LegalSections';
 import Footer from './pages/Footer';
 import { useGitHubRepos } from './hooks/useCustom';
-import { GITHUB_USERNAME } from './utils/githubPortfolio';
+import { GITHUB_USERNAME } from './config/featuredProjects';
 import './styles/globals.css';
 
 function App() {
@@ -31,14 +31,6 @@ function App() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
-
-  // Initialize dark mode
-  useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') !== 'false';
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    }
   }, []);
 
   const showLoading = isLoading || portfolioLoading;
